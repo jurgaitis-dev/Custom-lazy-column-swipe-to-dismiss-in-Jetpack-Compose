@@ -59,88 +59,97 @@ fun SwipeToDismissList(modifier: Modifier = Modifier) {
 
     LazyColumn(modifier = modifier) {
         items(randomList) { item ->
-            var offsetX by remember { mutableStateOf(0f) }
-            var isDismissed by remember { mutableStateOf(false) }
-            var isSwipeReleased by remember { mutableStateOf(false) }
-
-            val animatedOffsetX by animateFloatAsState(
-                targetValue = if (isDismissed) screenWidthPx else offsetX,
-                animationSpec = if (isSwipeReleased) tween(durationMillis = 300) else tween(
-                    durationMillis = 0
-                ),
-                finishedListener = {
-                    if (isDismissed && it >= screenWidthPx) {
-                        isDismissed = false
-                        isSwipeReleased = false
-                        randomList.remove(item)
-                        offsetX = 0f
-                    }
-                }
+            SampleItem(
+                item = item,
+                screenWidthPx = screenWidthPx,
+                onDelete = { randomList.remove(item) },
             )
+        }
+    }
+}
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.Red)
-            ) {
+@Composable
+fun SampleItem(item: String, screenWidthPx: Float, onDelete: (String) -> Unit) {
+    var offsetX by remember { mutableStateOf(0f) }
+    var isDismissed by remember { mutableStateOf(false) }
+    var isSwipeReleased by remember { mutableStateOf(false) }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
-                        .pointerInput(Unit) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    val down =
-                                        awaitPointerEvent().changes.firstOrNull { it.pressed }
-                                            ?: continue
+    val animatedOffsetX by animateFloatAsState(
+        targetValue = if (isDismissed) screenWidthPx else offsetX,
+        animationSpec = if (isSwipeReleased) tween(durationMillis = 300) else tween(
+            durationMillis = 0
+        ),
+        finishedListener = {
+            if (isDismissed && it >= screenWidthPx) {
+                isDismissed = false
+                isSwipeReleased = false
+                onDelete(item)
+                offsetX = 0f
+            }
+        }
+    )
 
-                                    var dragAmount = 0f
-                                    while (down.pressed) {
-                                        val event = awaitPointerEvent()
-                                        val drag = event.changes.firstOrNull() ?: break
-                                        val deltaX = drag.positionChange().x
-                                        val deltaY = drag.positionChange().y
-                                        isSwipeReleased = false
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Red)
+    ) {
 
-                                        // abs(deltaX) > abs(deltaY) * 2 will prevent accidental deletion
-                                        if (deltaX > 0 && abs(deltaX) > abs(deltaY) * 2 || offsetX > 0) {
-                                            offsetX += deltaX
-                                            dragAmount += deltaX
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
+                .pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val down =
+                                awaitPointerEvent().changes.firstOrNull { it.pressed }
+                                    ?: continue
 
-                                            drag.consume()
-                                        }
+                            var dragAmount = 0f
+                            while (down.pressed) {
+                                val event = awaitPointerEvent()
+                                val drag = event.changes.firstOrNull() ?: break
+                                val deltaX = drag.positionChange().x
+                                val deltaY = drag.positionChange().y
+                                isSwipeReleased = false
 
-                                        // Pointer released — swipe ends
-                                        if (!drag.pressed) {
-                                            println("Swipe released")
-                                            isSwipeReleased = true
+                                // abs(deltaX) > abs(deltaY) * 2 will prevent accidental deletion
+                                if (deltaX > 0 && abs(deltaX) > abs(deltaY) * 2 || offsetX > 0) {
+                                    offsetX += deltaX
+                                    dragAmount += deltaX
 
-                                            // Now decide if it's a dismissal or reset
-                                            if (abs(offsetX) > screenWidthPx * 0.5) {
-                                                isDismissed = true
-                                            } else {
-                                                offsetX = 0f
-                                            }
+                                    drag.consume()
+                                }
 
-                                            break
-                                        }
+                                // Pointer released — swipe ends
+                                if (!drag.pressed) {
+                                    println("Swipe released")
+                                    isSwipeReleased = true
+
+                                    // Now decide if it's a dismissal or reset
+                                    if (abs(offsetX) > screenWidthPx * 0.5) {
+                                        isDismissed = true
+                                    } else {
+                                        offsetX = 0f
                                     }
+
+                                    break
                                 }
                             }
                         }
-                        .background(Color.White)
-                ) {
-                    Text(
-                        text = item,
-                        fontSize = 20.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.White)
-                            .padding(16.dp)
-                    )
+                    }
                 }
-            }
+                .background(Color.White)
+        ) {
+            Text(
+                text = item,
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(16.dp)
+            )
         }
     }
 }
