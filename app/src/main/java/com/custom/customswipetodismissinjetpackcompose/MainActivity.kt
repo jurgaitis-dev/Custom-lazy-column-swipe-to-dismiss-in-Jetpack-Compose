@@ -105,6 +105,7 @@ fun SwipeToDismissList(modifier: Modifier = Modifier) {
                                         val deltaY = drag.positionChange().y
                                         isSwipeReleased = false
 
+                                        // abs(deltaX) > abs(deltaY) * 2 will prevent accidental deletion
                                         if (deltaX > 0 && abs(deltaX) > abs(deltaY) * 2 || offsetX > 0) {
                                             offsetX += deltaX
                                             dragAmount += deltaX
