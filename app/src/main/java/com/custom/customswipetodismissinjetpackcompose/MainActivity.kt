@@ -62,17 +62,17 @@ fun SwipeToDismissList(modifier: Modifier = Modifier) {
     LazyColumn(modifier = modifier) {
         items(randomList) { item ->
             var offsetX by remember { mutableStateOf(0f) }
-            var dismissed by remember { mutableStateOf(false) }
+            var isDismissed by remember { mutableStateOf(false) }
             var isSwipeReleased by remember { mutableStateOf(false) }
 
             val animatedOffsetX by animateFloatAsState(
-                targetValue = if (dismissed) screenWidthPx else offsetX,
+                targetValue = if (isDismissed) screenWidthPx else offsetX,
                 animationSpec = if (isSwipeReleased) tween(durationMillis = 300) else tween(
                     durationMillis = 0
                 ),
                 finishedListener = {
-                    if (dismissed && it >= screenWidthPx) {
-                        dismissed = false
+                    if (isDismissed && it >= screenWidthPx) {
+                        isDismissed = false
                         isSwipeReleased = false
                         randomList.remove(item)
                         offsetX = 0f
@@ -119,7 +119,7 @@ fun SwipeToDismissList(modifier: Modifier = Modifier) {
 
                                             // Now decide if it's a dismissal or reset
                                             if (abs(offsetX) > screenWidthPx * 0.5) {
-                                                dismissed = true
+                                                isDismissed = true
                                             } else {
                                                 offsetX = 0f
                                             }
